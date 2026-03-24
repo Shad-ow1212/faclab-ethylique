@@ -1453,7 +1453,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 756b824b9631b884ebcb597bab911970, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerMovement
-  walkSpeed: 7
+  walkSpeed: 5
   sprintSpeed: 10
   groundDrag: 1
   jumpForce: 5

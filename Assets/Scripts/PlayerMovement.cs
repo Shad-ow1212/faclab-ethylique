@@ -1,9 +1,6 @@
-using Unity.Hierarchy;
-using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using TMPro;
-using UnityEngine.UI;
 
 public class PlayerMovement : MonoBehaviour
 {
@@ -19,7 +16,6 @@ public class PlayerMovement : MonoBehaviour
     public bool readyToJump;
 
     public float playerHeight;
-    public LayerMask AllTheGrounds;
     bool grounded;
 
     public Transform orientation;
@@ -66,26 +62,21 @@ public class PlayerMovement : MonoBehaviour
         rb = GetComponent<Rigidbody>();
         rb.freezeRotation = true;
         readyToJump = true;
+
+        moveSpeed = walkSpeed;
     }
     private void Update()
     {
         grounded = Physics.Raycast(transform.position, Vector3.down, playerHeight * 0.5f + 0.2f);
         InputDetection();
-
-        if (grounded)
-        {
-            Vector3 velocity = rb.linearVelocity;
-            velocity.x *= 0.9f;
-            velocity.z *= 0.9f;
-            rb.linearVelocity = velocity;
-        }
+        HandleDrag();
+        SpeedDebug();
     }
     private void FixedUpdate()
     {
+        StateHandler();
         MovePlayer();
         ControlSpeed();
-        StateHandler();
-        SpeedDebug();
     }
     private void InputDetection()
     {
@@ -103,24 +94,46 @@ public class PlayerMovement : MonoBehaviour
 
     private void StateHandler()
     {
-        if (grounded && SprintAction.IsPressed())
+        if (SprintAction.IsPressed())
         {
             state = MovementState.sprinting;
             moveSpeed = sprintSpeed;
         }
-        else if (grounded)
+        else if (!grounded)
+        {
+            state = MovementState.air;
+        }
+        else
         {
             state = MovementState.walking;
             moveSpeed = walkSpeed;
         }
+    }
+
+    private void HandleDrag()
+    {
+        if (grounded)
+        {
+            rb.linearDamping = groundDrag;
+        }
         else
         {
-            state = MovementState.air;
+            rb.linearDamping = 0f;
         }
     }
     private void MovePlayer()
     {
         moveDirection = orientation.forward * verticalInput + orientation.right * horizontalInput;
+
+        if (moveDirection.sqrMagnitude > 1f)
+        {
+            moveDirection.Normalize();
+        }
+
+        Vector3 flatVel = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
+
+        if (flatVel.magnitude >= moveSpeed)
+            return;
 
         if (grounded)
         {
